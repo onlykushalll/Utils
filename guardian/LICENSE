@@ -1,0 +1,35 @@
+# Guardian License
+
+**Source-available. Dual-license for evaluation and WLTIOS integration.**
+
+## 1. Evaluation License
+
+Permission is granted to download, inspect, compile, and test this software
+for evaluation and security research purposes, free of charge.
+
+Redistribution of the source code, in whole or in part, is permitted provided
+that the above copyright notice and this license are included.
+
+## 2. WLTIOS Integration License
+
+Integration into the WLTIOS security OS, including compilation, bundling into
+the WLTIOS initramfs, and execution on WLTIOS targets, is permitted.
+
+## 3. Restrictions
+
+- This software may NOT be sold or distributed as a standalone commercial product.
+- Removal of tamper-evident logging, signature verification, or kill-switch
+  mechanisms is prohibited in deployed configurations.
+- The `update_signing.key` (private Ed25519 key) in this repository is for
+  DEVELOPMENT ONLY. It MUST be replaced with a production key before deployment.
+
+## 4. Disclaimer
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. The authors
+are not liable for damages arising from the use of this software, including
+but not limited to: false positives causing process termination, false
+negatives allowing intrusions, kill-switch activation blocking legitimate
+traffic, or forensic log corruption.
+
+This is a security tool. Use at your own risk. Test in QEMU before deploying
+to any production target.

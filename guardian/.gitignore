@@ -1,0 +1,37 @@
+# Guardian .gitignore
+# Vendored dependencies (extracted .deb packages — not source)
+local-deps/
+local-yara/
+*.deb
+
+# Build artifacts
+build/
+build.log
+*.o
+*.so
+*.a
+
+# ML model (large binary, regenerable)
+ml/anomaly.pkl
+ml/anomaly.pkl.sha256
+
+# FIM databases (regenerable)
+signatures/fim.db
+signatures/fim.db.key
+signatures/fim_baseline.db
+
+# Compiled YARA rules (regenerable from rules/guardian.yar)
+signatures/guardian.yarc
+
+# Logs
+*.log
+guardian.log
+
+# Runtime
+/run/
+.venv/
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db

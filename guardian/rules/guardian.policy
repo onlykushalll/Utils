@@ -1,0 +1,44 @@
+# guardian.policy — threat→action mapping (policy engine rules).
+#
+# Format: <source_glob> <rule_glob> <min_severity> -> <action>
+# First match wins. Falls back to built-in defaults if no match.
+#
+# Sources: yara, ebpf, fim, anomaly, net, policy
+# Severities: INFO LOW MEDIUM HIGH CRITICAL
+# Actions: LOG FREEZE THAW QUARANTINE_FILE RESTORE_FILE QUARANTINE_PROC BLOCK_NET ALERT KILL DELETE ENCRYPT KILL_SWITCH
+
+# YARA: known-critical malware → quarantine + kill switch
+yara *Malware* CRITICAL -> QUARANTINE_FILE
+yara *Trojan* HIGH -> QUARANTINE_FILE
+yara *EICAR* CRITICAL -> QUARANTINE_FILE
+yara *Reverse* HIGH -> QUARANTINE_FILE
+yara * HIGH -> QUARANTINE_FILE
+
+# eBPF behavioral rules
+ebpf *TOR_PROCESS_KILLED CRITICAL -> KILL_SWITCH
+ebpf *KILLSWITCH_BYPASS* CRITICAL -> KILL_SWITCH
+ebpf *SANDBOX_ESCAPE* CRITICAL -> KILL
+ebpf *REVERSE_SHELL* HIGH -> KILL
+ebpf *SENSITIVE_FILE* HIGH -> FREEZE
+ebpf *SHELL_BY_WEB* HIGH -> QUARANTINE_PROC
+ebpf *PERSISTENCE* HIGH -> QUARANTINE_FILE
+ebpf *FORK_BOMB* MEDIUM -> FREEZE
+ebpf * HIGH -> FREEZE
+ebpf * MEDIUM -> ALERT
+ebpf * LOW -> LOG
+
+# FIM: critical paths → restore
+fim * CRITICAL -> RESTORE_FILE
+fim * HIGH -> RESTORE_FILE
+fim * MEDIUM -> ALERT
+fim * LOW -> LOG
+
+# Anomaly ML
+anomaly * CRITICAL -> FREEZE
+anomaly * HIGH -> FREEZE
+anomaly * MEDIUM -> LOG
+
+# Network IDS
+net * CRITICAL -> KILL_SWITCH
+net * HIGH -> BLOCK_NET
+net * MEDIUM -> ALERT

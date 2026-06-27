@@ -1,0 +1,66 @@
+
+# ebpf.rules — Falco-style behavioral rules for the Guardian eBPF engine.
+#
+# Format:
+#   rule <id> <severity> <action>
+#     desc <text>
+#     condition <field> <op> <val> [and|or <field> <op> <val> ...]
+#
+# Fields: comm, pcomm (parent comm), pid, uid, path, rule_id
+# Operators: in (a,b,c), == val, contains substr, startswith prefix
+# Severities: INFO LOW MEDIUM HIGH CRITICAL
+# Actions: LOG FREEZE QUARANTINE_FILE QUARANTINE_PROC BLOCK_NET KILL KILL_SWITCH ALERT
+
+rule SHELL_BY_WEB_SERVER HIGH QUARANTINE_PROC
+  desc nginx/apache spawned a shell
+  condition comm in (sh,bash,zsh,dash)
+
+rule SENSITIVE_FILE_ACCESS HIGH FREEZE
+  desc non-root process opened /etc/shadow or /proc/kcore
+  condition path contains shadow
+
+rule REVERSE_SHELL_PATTERN HIGH KILL
+  desc process execved a known reverse shell binary
+  condition path contains /dev/tcp
+
+rule TOR_PROCESS_KILLED CRITICAL KILL_SWITCH
+  desc someone killed the tor process
+  condition comm == tor
+
+rule KILLSWITCH_BYPASS_ATTEMPT CRITICAL KILL_SWITCH
+  desc process tried to add a route (bypass kill switch)
+  condition comm in (ip,route,ifconfig)
+
+rule FORK_BOMB MEDIUM FREEZE
+  desc process with rapid fork rate
+  condition comm in (bash,sh)
+
+rule UNEXPECTED_ROOT_SHELL MEDIUM ALERT
+  desc root shell spawned outside expected contexts
+  condition uid == 0
+
+rule PERSISTENCE_ATTEMPT HIGH QUARANTINE_FILE
+  desc process writing to /etc or boot sectors
+  condition path contains /etc/cron
+
+rule SANDBOX_ESCAPE_ATTEMPT CRITICAL KILL
+  desc process tried to break out of namespace
+  condition comm in (unshare,nsenter)
+
+
+# Phase 2.5: Process ancestry IOA rules (Indicators of Attack)
+# BUG 7 fix: these use 'pcomm' (parent comm) populated from the ancestry BPF
+# map in ringbuf_cb. Old rules used 'path contains nginx' which never matched
+# a shell execve (path is /bin/bash, not the parent).
+
+rule SHELL_SPAWNED_BY_WEB_SERVER HIGH QUARANTINE_PROC
+  desc Web server (nginx/apache/php-fpm) spawned a shell - likely web shell
+  condition comm in (sh,bash,zsh,dash) and pcomm in (nginx,apache2,httpd,php-fpm)
+
+rule SHELL_SPAWNED_BY_PYTHON HIGH FREEZE
+  desc Python interpreter spawned a shell - scripted attack indicator
+  condition comm in (sh,bash,zsh,dash) and pcomm in (python,python3,python2)
+
+rule UNEXPECTED_BIN_EXEC MEDIUM LOG
+  desc Execution from /tmp or /var/tmp - common malware drop location
+  condition path startswith /tmp/
